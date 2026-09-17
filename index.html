@@ -308,7 +308,7 @@ async function generateMenu() {
   resultDiv.innerHTML = "<p style='text-align:center;'>AIが最適な献立を考えています...</p>";
 
   try {
-    const response = await fetch("http://localhost:3000/api/menu", {
+    const response = await fetch("https://ai-menu-app-07de.onrender.com/api/menu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ budget, people, days, meals: selectedMeals, dislikes })
@@ -428,8 +428,7 @@ async function regenerateSingleDish(index, meal) {
   card.style.opacity = "0.5";
 
   try {
-    const response = await fetch("http://localhost:3000/api/regenerate-dish", {
-      method: "POST",
+    const response = await fetch("https://ai-menu-app-07de.onrender.com/api/regenerate-dish", {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ meal, dislikes })
     });
