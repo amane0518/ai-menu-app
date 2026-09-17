@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI献立サポーター</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f7f9fc;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: #ff5a5f;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .checkbox-group label {
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .error-message {
+      color: #d9534f;
+      background-color: #fdf7f7;
+      border: 1px solid #f5c6cb;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      background-color: #ff5a5f;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #e0484d;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .result-container {
+      margin-top: 24px;
+    }
+
+    .menu-card {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 4px;
+    }
+
+    .dish-name {
+      font-size: 1.1rem;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .ingredients-list {
+      font-size: 0.85rem;
+      color: #666;
+      padding-left: 18px;
+      margin: 0 0 8px 0;
+    }
+
+    .ingredients-list li {
+      margin-bottom: 4px;
+    }
+
+    .btn-regen {
+      background-color: #4a90e2;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      width: auto;
+      margin-top: 8px;
+    }
+
+    .btn-regen:hover {
+      background-color: #357abd;
+    }
+
+    .amazon-btn {
+      display: inline-block;
+      background-color: #ff9900;
+      color: #111;
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .amazon-btn:hover {
+      background-color: #e68a00;
+    }
+
+    .shopping-list {
+      background-color: #eef9f5;
+      border: 1px solid #c2e8d8;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+
+    .shopping-list h2 {
+      font-size: 1.1rem;
+      color: #2e7d32;
+      margin-top: 0;
+    }
+
+    .shopping-list li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🍳 献立サポーター</h1>
+
+  <div class="form-group">
+    <label for="budget">予算（円）</label>
+    <input type="number" id="budget" value="6000" placeholder="例: 6000">
+  </div>
+
+  <div class="form-group">
+    <label for="people">人数</label>
+    <select id="people">
+      <option value="1">1人</option>
+      <option value="2">2人</option>
+      <option value="3" selected>3人</option>
+      <option value="4">4人</option>
+      <option value="5">5人</option>
+      <option value="6">6人</option>
+      <option value="7">7人</option>
+      <option value="8">8人</option>
+      <option value="9">9人</option>
+      <option value="10">10人</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="days">日数</label>
+    <select id="days">
+      <option value="1">1日間</option>
+      <option value="2">2日間</option>
+      <option value="3" selected>3日間</option>
+      <option value="4">4日間</option>
+      <option value="5">5日間</option>
+      <option value="6">6日間</option>
+      <option value="7">7日間</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>献立を作る時間帯</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="meals" value="朝" checked> 朝</label>
+      <label><input type="checkbox" name="meals" value="昼" checked> 昼</label>
+      <label><input type="checkbox" name="meals" value="夜" checked> 夜</label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="dislikes">苦手な食材・アレルギー</label>
+    <input type="text" id="dislikes" placeholder="例：ピーマン 卵 えび（スペースかカンマ区切り）">
+  </div>
+
+  <div id="validationError" class="error-message"></div>
+
+  <button id="generateBtn" onclick="generateMenu()">献立を作る</button>
+
+  <div id="result" class="result-container"></div>
+</div>
+
+<script>
+let currentMenuData = [];
+
+function getAmazonUrl(keyword) {
+  const query = encodeURIComponent(`ライフ ${keyword}`);
+  return `https://www.amazon.co.jp/s?k=${query}`;
+}
+
+function showError(msg) {
+  const errDiv = document.getElementById("validationError");
+  errDiv.innerText = msg;
+  errDiv.style.display = "block";
+}
+
+function clearError() {
+  const errDiv = document.getElementById("validationError");
+  errDiv.innerText = "";
+  errDiv.style.display = "none";
+}
+
+async function generateMenu() {
+  clearError();
+
+  // 全角数字を入力されても自動で半角に変換する処理
+  let budgetInput = document.getElementById("budget").value;
+  budgetInput = budgetInput.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+
+  const budget = Number(budgetInput);
+  const people = Number(document.getElementById("people").value || 3);
+  const days = Number(document.getElementById("days").value || 3);
+
+  const selectedMeals = Array.from(document.querySelectorAll('input[name="meals"]:checked'))
+    .map(cb => cb.value);
+
+  const dislikesInput = document.getElementById("dislikes").value;
+  const dislikes = dislikesInput 
+    ? dislikesInput.split(/[,、\s]+/).map(item => item.trim()).filter(Boolean) 
+    : [];
+
+  if (selectedMeals.length === 0) {
+    showError("⚠️ 献立を作成する時間帯を少なくとも1つ選択してください。");
+    return;
+  }
+
+  const minPerMeal = 200;
+  const minBudget = selectedMeals.length * minPerMeal * days * people;
+
+  if (!budgetInput || isNaN(budget) || budget < minBudget) {
+    showError(`⚠️ 選択した条件（${days}日間 / ${selectedMeals.length}食 / ${people}人分）の場合、予算は最低 ${minBudget.toLocaleString()} 円以上に設定してください。`);
+    return;
+  }
+
+  const maxBudget = 100000;
+  if (budget >= maxBudget) {
+    showError(`⚠️ 予算は ${maxBudget.toLocaleString()} 円未満で入力してください。`);
+    return;
+  }
+
+  const generateBtn = document.getElementById("generateBtn");
+  const resultDiv = document.getElementById("result");
+
+  generateBtn.disabled = true;
+  generateBtn.innerText = "献立を作成中...";
+  resultDiv.innerHTML = "<p style='text-align:center;'>AIが最適な献立を考えています...</p>";
+
+  try {
+    const response = await fetch("http://localhost:3000/api/menu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ budget, people, days, meals: selectedMeals, dislikes })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "エラーが発生しました。");
+    }
+
+    currentMenuData = data.menu;
+    
+    // 初回生成時の合計額も重複排除した価格で計算
+    const initialTotalPrice = calculateTotalPrice(currentMenuData);
+    renderResult({ totalPrice: initialTotalPrice, menu: currentMenuData });
+
+  } catch (error) {
+    resultDiv.innerHTML = `<p style="color:red; text-align:center;">エラー: ${error.message}</p>`;
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.innerText = "献立を作る";
+  }
+}
+
+// 重複食材を除外して合計金額を算出する共通関数
+function calculateTotalPrice(menu) {
+  const shoppingMap = new Map();
+  menu.forEach(item => {
+    item.ingredients.forEach(ing => {
+      if (shoppingMap.has(ing.name)) {
+        shoppingMap.set(ing.name, Math.max(shoppingMap.get(ing.name), ing.price));
+      } else {
+        shoppingMap.set(ing.name, ing.price);
+      }
+    });
+  });
+
+  let total = 0;
+  shoppingMap.forEach(price => total += price);
+  return total;
+}
+
+function renderResult(data) {
+  const resultDiv = document.getElementById("result");
+  let html = `<h3>💡 提案された献立（概算合計: 約 ${data.totalPrice} 円）</h3>`;
+
+  data.menu.forEach((item, index) => {
+    html += `
+      <div class="menu-card" id="dish-${index}">
+        <div class="menu-header">
+          <span>${item.day}日目 - ${item.meal}</span>
+          <span>約 ${item.price} 円</span>
+        </div>
+        <div class="dish-name">🍳 ${item.dish}</div>
+        <ul class="ingredients-list">
+          ${item.ingredients.map(ing => `
+            <li>
+              ${ing.name} (約 ${ing.price} 円)
+              <a href="${getAmazonUrl(ing.name)}" target="_blank" rel="noopener noreferrer" class="amazon-btn">Amazonで探す</a>
+            </li>
+          `).join("")}
+        </ul>
+        <button class="btn-regen" onclick="regenerateSingleDish(${index}, '${item.meal}')">この1食をチェンジ</button>
+      </div>
+    `;
+  });
+
+  html += renderShoppingList(data.menu);
+  resultDiv.innerHTML = html;
+}
+
+function renderShoppingList(menu) {
+  const shoppingMap = new Map();
+
+  menu.forEach(item => {
+    item.ingredients.forEach(ing => {
+      if (shoppingMap.has(ing.name)) {
+        const current = shoppingMap.get(ing.name);
+        shoppingMap.set(ing.name, Math.max(current, ing.price));
+      } else {
+        shoppingMap.set(ing.name, ing.price);
+      }
+    });
+  });
+
+  let listHtml = `
+    <div class="shopping-list">
+      <h2>🛒 まとめ買いリスト</h2>
+      <ul>
+  `;
+
+  shoppingMap.forEach((price, name) => {
+    listHtml += `
+      <li>
+        <strong>${name}</strong>: 約 ${price} 円
+        <a href="${getAmazonUrl(name)}" target="_blank" rel="noopener noreferrer" class="amazon-btn">Amazonで探す</a>
+      </li>
+    `;
+  });
+
+  listHtml += `
+      </ul>
+    </div>
+  `;
+
+  return listHtml;
+}
+
+async function regenerateSingleDish(index, meal) {
+  const card = document.getElementById(`dish-${index}`);
+  const dislikesInput = document.getElementById("dislikes").value;
+  const dislikes = dislikesInput 
+    ? dislikesInput.split(/[,、\s]+/).map(item => item.trim()).filter(Boolean) 
+    : [];
+
+  card.style.opacity = "0.5";
+
+  try {
+    const response = await fetch("http://localhost:3000/api/regenerate-dish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ meal, dislikes })
+    });
+
+    const newDish = await response.json();
+
+    if (!response.ok) {
+      throw new Error(newDish.error || "再生成に失敗しました。");
+    }
+
+    currentMenuData[index].dish = newDish.dish;
+    currentMenuData[index].price = newDish.price;
+    currentMenuData[index].ingredients = newDish.ingredients;
+
+    // まとめ買いリストと全体の概算合計を再計算して画面全体を更新
+    const newTotalPrice = calculateTotalPrice(currentMenuData);
+    renderResult({ totalPrice: newTotalPrice, menu: currentMenuData });
+
+  } catch (error) {
+    alert(`エラー: ${error.message}`);
+    card.style.opacity = "1";
+  }
+}
+</script>
+
+</body>
+</html>
