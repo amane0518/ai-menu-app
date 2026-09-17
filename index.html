@@ -121,6 +121,7 @@
       font-size: 1.1rem;
       color: #333;
       margin-bottom: 8px;
+      font-weight: bold;
     }
 
     .ingredients-list {
@@ -134,10 +135,36 @@
       margin-bottom: 4px;
     }
 
+    /* レシピ表示用スタイル */
+    .recipe-box {
+      background-color: #fff8e7;
+      border: 1px solid #ffe0b2;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      font-size: 0.85rem;
+    }
+
+    .recipe-title {
+      font-weight: bold;
+      color: #e65100;
+      margin-bottom: 4px;
+    }
+
+    .recipe-steps {
+      padding-left: 20px;
+      margin: 0;
+      color: #444;
+    }
+
+    .recipe-steps li {
+      margin-bottom: 4px;
+    }
+
     .btn-regen {
       background-color: #4a90e2;
       font-size: 0.75rem;
-      padding: 4px 8px;
+      padding: 6px 12px;
       width: auto;
       margin-top: 8px;
     }
@@ -186,20 +213,20 @@
 
 <div class="container">
   <h1>🍳 献立サポーター</h1>
-<!-- 使い方案内（折りたたみ） -->
-<details style="background: #f8f9fa; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
-  <summary style="font-weight: bold; cursor: pointer; color: #2c3e50; font-size: 0.95em;">
-    このアプリの使い方
-  </summary>
-  <div style="margin-top: 10px; font-size: 0.88em; line-height: 1.6; color: #495057;">
-    <ol style="padding-left: 20px; margin: 0;">
-      <li><b>条件を入力</b>：予算・人数・日数などを設定し「献立を作る」を押します。</li>
-      <li><b>献立をチェック</b>：AIが指定条件に合わせた献立と概算金額を提案します。</li>
-      <li><b>ネットスーパーで買える</b>：食材横の「Amazonで探す」ボタンから、そのままライフなどのネットスーパーで購入できます！</li>
-      <li><b>1食だけチェンジ</b>：「この1食をチェンジ」を押すと、特定の一食だけ別の料理に変更できます。</li>
-    </ol>
-  </div>
-</details>
+
+  <details style="background: #f8f9fa; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+    <summary style="font-weight: bold; cursor: pointer; color: #2c3e50; font-size: 0.95em;">
+      このアプリの使い方
+    </summary>
+    <div style="margin-top: 10px; font-size: 0.88em; line-height: 1.6; color: #495057;">
+      <ol style="padding-left: 20px; margin: 0;">
+        <li><b>条件を入力</b>：予算・人数・日数などを設定し「献立を作る」を押します。</li>
+        <li><b>献立とレシピをチェック</b>：AIが指定条件に合わせた献立・簡単作り方・概算金額を提案します。</li>
+        <li><b>ネットスーパーで買える</b>：食材横の「Amazonで探す」ボタンから、そのままライフなどのネットスーパーで購入できます！</li>
+        <li><b>1食だけチェンジ</b>：「この1食をチェンジ」を押すと、特定の一食だけ別の料理に変更できます。</li>
+      </ol>
+    </div>
+  </details>
 
   <div class="form-group">
     <label for="budget">予算（円）</label>
@@ -259,6 +286,22 @@
 <script>
 let currentMenuData = [];
 
+// ページ読み込み時に保存された前回の献立を自動復元する
+window.addEventListener('DOMContentLoaded', () => {
+  const savedData = localStorage.getItem('savedMenuData');
+  if (savedData) {
+    try {
+      currentMenuData = JSON.parse(savedData);
+      if (currentMenuData && currentMenuData.length > 0) {
+        const initialTotalPrice = calculateTotalPrice(currentMenuData);
+        renderResult({ totalPrice: initialTotalPrice, menu: currentMenuData }, false); // 自動保存なしで描画
+      }
+    } catch (e) {
+      console.error("保存データの復元エラー", e);
+    }
+  }
+});
+
 function getAmazonUrl(keyword) {
   const query = encodeURIComponent(`ライフ ${keyword}`);
   return `https://www.amazon.co.jp/s?k=${query}`;
@@ -279,7 +322,6 @@ function clearError() {
 async function generateMenu() {
   clearError();
 
-  // 全角数字を入力されても自動で半角に変換する処理
   let budgetInput = document.getElementById("budget").value;
   budgetInput = budgetInput.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
 
@@ -319,7 +361,7 @@ async function generateMenu() {
 
   generateBtn.disabled = true;
   generateBtn.innerText = "献立を作成中...";
-  resultDiv.innerHTML = "<p style='text-align:center;'>AIが最適な献立を考えています...</p>";
+  resultDiv.innerHTML = "<p style='text-align:center;'>AIが最適な献立とレシピを考えています...</p>";
 
   try {
     const response = await fetch("https://ai-menu-app-07de.onrender.com/api/menu", {
@@ -336,9 +378,8 @@ async function generateMenu() {
 
     currentMenuData = data.menu;
     
-    // 初回生成時の合計額も重複排除した価格で計算
     const initialTotalPrice = calculateTotalPrice(currentMenuData);
-    renderResult({ totalPrice: initialTotalPrice, menu: currentMenuData });
+    renderResult({ totalPrice: initialTotalPrice, menu: currentMenuData }, true); // 生成後に保存
 
   } catch (error) {
     resultDiv.innerHTML = `<p style="color:red; text-align:center;">エラー: ${error.message}</p>`;
@@ -348,7 +389,6 @@ async function generateMenu() {
   }
 }
 
-// 重複食材を除外して合計金額を算出する共通関数
 function calculateTotalPrice(menu) {
   const shoppingMap = new Map();
   menu.forEach(item => {
@@ -366,11 +406,24 @@ function calculateTotalPrice(menu) {
   return total;
 }
 
-function renderResult(data) {
+function renderResult(data, shouldSave = true) {
   const resultDiv = document.getElementById("result");
   let html = `<h3>💡 提案された献立（概算合計: 約 ${data.totalPrice} 円）</h3>`;
 
   data.menu.forEach((item, index) => {
+    // レシピ手順（ステップ）のHTML作成
+    let recipeHtml = "";
+    if (item.recipe && Array.isArray(item.recipe) && item.recipe.length > 0) {
+      recipeHtml = `
+        <div class="recipe-box">
+          <div class="recipe-title">📖 簡単レシピ・作り方</div>
+          <ol class="recipe-steps">
+            ${item.recipe.map(step => `<li>${step}</li>`).join("")}
+          </ol>
+        </div>
+      `;
+    }
+
     html += `
       <div class="menu-card" id="dish-${index}">
         <div class="menu-header">
@@ -386,6 +439,7 @@ function renderResult(data) {
             </li>
           `).join("")}
         </ul>
+        ${recipeHtml}
         <button class="btn-regen" onclick="regenerateSingleDish(${index}, '${item.meal}')">この1食をチェンジ</button>
       </div>
     `;
@@ -393,6 +447,11 @@ function renderResult(data) {
 
   html += renderShoppingList(data.menu);
   resultDiv.innerHTML = html;
+
+  // ローカルストレージに最新状態を保存
+  if (shouldSave) {
+    localStorage.setItem('savedMenuData', JSON.stringify(data.menu));
+  }
 }
 
 function renderShoppingList(menu) {
@@ -443,6 +502,7 @@ async function regenerateSingleDish(index, meal) {
 
   try {
     const response = await fetch("https://ai-menu-app-07de.onrender.com/api/regenerate-dish", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ meal, dislikes })
     });
@@ -456,10 +516,12 @@ async function regenerateSingleDish(index, meal) {
     currentMenuData[index].dish = newDish.dish;
     currentMenuData[index].price = newDish.price;
     currentMenuData[index].ingredients = newDish.ingredients;
+    if (newDish.recipe) {
+      currentMenuData[index].recipe = newDish.recipe; // レシピも更新
+    }
 
-    // まとめ買いリストと全体の概算合計を再計算して画面全体を更新
     const newTotalPrice = calculateTotalPrice(currentMenuData);
-    renderResult({ totalPrice: newTotalPrice, menu: currentMenuData });
+    renderResult({ totalPrice: newTotalPrice, menu: currentMenuData }, true); // チェンジ後も自動保存
 
   } catch (error) {
     alert(`エラー: ${error.message}`);
